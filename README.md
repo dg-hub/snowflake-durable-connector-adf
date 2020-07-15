@@ -1,5 +1,5 @@
 # Snowflake Durable Connector for Azure Data Factory (ADF)
-This connector is an fork of work authored by Jeremiah Hansen: [snowflake-connector-adf](https://github.com/jeremiahhansen/snowflake-connector-adf)
+This connector is a fork of work authored by Jeremiah Hansen: [snowflake-connector-adf](https://github.com/jeremiahhansen/snowflake-connector-adf)
 
 
 This purpose of this fork is to address the maximum response time limitation in HTTP triggered function Documeneted [Here](https://docs.microsoft.com/en-us/azure/azure-functions/functions-scale)
