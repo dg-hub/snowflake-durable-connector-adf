@@ -1,0 +1,194 @@
+{
+	"name": "pl_SnowflakeDurableConnectorAdf",
+	"properties": {
+		"activities": [
+			{
+				"name": "startProcedure",
+				"type": "AzureFunctionActivity",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"functionName": "SnowflakeDurableConnectorAdf_HttpStart",
+					"method": "POST",
+					"body": {
+						"value": "{\"databaseName\":\"@{pipeline().parameters.databaseName}\",\"schemaName\":\"@{pipeline().parameters.schemaName}\",\"storedProcedureName\":\"@{pipeline().parameters.storedProcedureName}\",\"parameters\":@{pipeline().parameters.parameters}}",
+						"type": "Expression"
+					}
+				},
+				"linkedServiceName": {
+					"referenceName": "fa_SnowflakeDurableConnectorAdf",
+					"type": "LinkedServiceReference"
+				}
+			},
+			{
+				"name": "loopStatus",
+				"type": "Until",
+				"dependsOn": [
+					{
+						"activity": "startProcedure",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"expression": {
+						"value": "@not(equals(activity('loopStatusQuery').output.runtimeStatus ,'Running'))",
+						"type": "Expression"
+					},
+					"activities": [
+						{
+							"name": "loopStatusQuery",
+							"type": "WebActivity",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"url": {
+									"value": "@activity('startProcedure').output.statusQueryGetUri",
+									"type": "Expression"
+								},
+								"method": "GET",
+								"linkedServices": [],
+								"datasets": []
+							}
+						},
+						{
+							"name": "loopStatusWait",
+							"type": "Wait",
+							"dependsOn": [
+								{
+									"activity": "setRuntimeStatus",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"waitTimeInSeconds": 10
+							}
+						},
+						{
+							"name": "setFailed",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "loopStatusQuery",
+									"dependencyConditions": [
+										"Failed"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "runtimeStatus",
+								"value": "Failed"
+							}
+						},
+						{
+							"name": "setRuntimeStatus",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "loopStatusQuery",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "runtimeStatus",
+								"value": {
+									"value": "@activity('loopStatusQuery').output.runtimeStatus",
+									"type": "Expression"
+								}
+							}
+						}
+					],
+					"timeout": "7.00:00:00"
+				}
+			},
+			{
+				"name": "finalStatusQuery",
+				"type": "WebActivity",
+				"dependsOn": [
+					{
+						"activity": "loopStatus",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "7.00:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"url": {
+						"value": "@activity('startProcedure').output.statusQueryGetUri",
+						"type": "Expression"
+					},
+					"method": "GET"
+				}
+			}
+		],
+		"parameters": {
+			"databaseName": {
+				"type": "string",
+				"defaultValue": "DATABASE"
+			},
+			"schemaName": {
+				"type": "string",
+				"defaultValue": "SCHEMA"
+			},
+			"storedProcedureName": {
+				"type": "string",
+				"defaultValue": "test"
+			},
+			"parameters": {
+				"type": "array",
+				"defaultValue": [
+					{
+						"name": "V_PARAMETER",
+						"type": "VARCHAR",
+						"value": "parameter-value"
+					}
+				]
+			}
+		},
+		"variables": {
+			"runtimeStatus": {
+				"type": "String",
+				"defaultValue": "Running"
+			},
+			"output": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "templates"
+		},
+		"annotations": []
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}
