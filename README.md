@@ -9,3 +9,8 @@ This purpose of this fork is to address the maximum response time limitation in 
 The code is an Azure Function which allows Azure Data Factory (ADF) to connect to Snowflake in a flexible way. It provides SQL-based stored procedure functionality with dyamic parameters and return values. Used with ADF you can build complete end-to-end data warehouse solutions for Snowflake while following Microsoft and Azure best practices around portability and security.
 
 ![Connector Sequence Diagram](Docs/SnowflakeSequence.png?raw=true "Connector Sequence Diagram")
+
+## Data Factory
+
+![Data Factory Pipeline](Docs/adf1.png?raw=true "Data Factory Pipeline")
+![Data Factory Loop](Docs/adf2.png?raw=true "Data Factory Loop")
